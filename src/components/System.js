@@ -12,6 +12,8 @@ const System = () => {
   const ELEVATORS = 5;
   const calls = [];
 
+  // const [isAvailable, setIsAvailable] = useState(true);
+
   //elevator positions
   const [e1Position, setE1Position] = useState(0);
   const [e2Position, setE2Position] = useState(0);
@@ -129,6 +131,14 @@ const System = () => {
 
   const callElevator = (targetFloor, time) => {
     const closest = getClosestElevator(targetFloor);
+
+    if (!closest) {
+      setTimeout(() => {
+        callElevator(targetFloor, time);
+      }, 1000);
+
+      return;
+    }
     handleElevatorMovement('moving', closest, targetFloor, time);
 
     setTimeout(() => {
@@ -170,24 +180,15 @@ const System = () => {
     const start = new Date(Date.now()).getTime();
     calls.push(targetFloor);
 
-    const interval = setInterval(() => {
-      if (calls.length === 0) {
-        clearInterval(interval);
-      } else {
-        if (calls.length > 1) {
-          const targetFloor = calls.shift();
-          callElevator(targetFloor, start);
-        } else if (calls.length === 1) {
-          const targetFloor = calls.shift();
-          waitToNextAvailableElevator(targetFloor, start);
-        }
-      }
-    }, 2000);
-  };
+    // process the first task in the queue
+    const currentElevator = calls.shift();
+    callElevator(currentElevator, start);
 
-  const waitToNextAvailableElevator = (targetFloor, start) => {
     setTimeout(() => {
-      callElevator(targetFloor, start);
+      if (calls.length > 0) {
+        const nextElevator = calls.shift();
+        callElevator(nextElevator, start);
+      }
     }, 2000);
   };
 
@@ -198,7 +199,13 @@ const System = () => {
         {Array.from({ length: FLOORS - 1 }, (_, i) => {
           return (
             <div className='system-grid-level' key={i + 1}>
-              <div className='system-level-corner'>9th</div>
+              <div className='system-level-corner'>
+                {' '}
+                {i === 0 && '1st'}
+                {i === 1 && '2nd'}
+                {i === 2 && '3rd'}
+                {i !== 0 && i !== 1 && i !== 2 && `${i + 1}th`}
+              </div>
               <div className='system-grid-cell'></div>
               <div className='system-grid-cell'></div>
               <div className='system-grid-cell'></div>
