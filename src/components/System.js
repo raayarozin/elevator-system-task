@@ -12,8 +12,6 @@ const System = () => {
   const ELEVATORS = 5;
   const calls = [];
 
-  // const [isAvailable, setIsAvailable] = useState(true);
-
   //elevator positions
   const [e1Position, setE1Position] = useState(0);
   const [e2Position, setE2Position] = useState(0);
@@ -120,12 +118,12 @@ const System = () => {
   };
 
   const getClosestElevator = (targetFloor) => {
-    const availableElevators = elevatorGrid.filter(
-      (elevator) => !elevator.isMoving
-    );
-    const distances = availableElevators.map((el) =>
-      Math.abs(el.currentFloor - targetFloor)
-    );
+    const availableElevators = elevatorGrid.filter((elevator) => {
+      return !elevator.isMoving;
+    });
+    const distances = availableElevators.map((el) => {
+      return Math.abs(el.currentFloor - targetFloor);
+    });
     return availableElevators[distances.indexOf(Math.min(...distances))];
   };
 
@@ -133,27 +131,29 @@ const System = () => {
     const closest = getClosestElevator(targetFloor);
 
     if (!closest) {
+      const newTime = new Date(Date.now()).getTime();
       setTimeout(() => {
-        callElevator(targetFloor, time);
+        callElevator(targetFloor, newTime);
       }, 1000);
 
       return;
+    } else {
+      handleElevatorMovement('moving', closest, targetFloor, time);
+
+      setTimeout(() => {
+        handleElevatorMovement(
+          'arrived',
+          closest,
+          targetFloor,
+          new Date(Date.now()).getTime()
+        );
+      }, 2000);
+
+      setTimeout(() => {
+        updateElevatorDisplay(closest.id, targetFloor, 'static');
+        buttonsSetStates[targetFloor]('call');
+      }, 3500);
     }
-    handleElevatorMovement('moving', closest, targetFloor, time);
-
-    setTimeout(() => {
-      handleElevatorMovement(
-        'arrived',
-        closest,
-        targetFloor,
-        new Date(Date.now()).getTime()
-      );
-    }, 2000);
-
-    setTimeout(() => {
-      updateElevatorDisplay(closest.id, targetFloor, 'static');
-      buttonsSetStates[targetFloor]('call');
-    }, 3000);
   };
 
   const handleElevatorMovement = (
@@ -180,7 +180,6 @@ const System = () => {
     const start = new Date(Date.now()).getTime();
     calls.push(targetFloor);
 
-    // process the first task in the queue
     const currentElevator = calls.shift();
     callElevator(currentElevator, start);
 
