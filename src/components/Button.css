@@ -1,0 +1,27 @@
+.elevator-button {
+  color: white;
+  width: 55px;
+  padding: 5px 0;
+  text-align: center;
+  display: block;
+  margin: auto;
+  border: none;
+  border-radius: 10%;
+}
+
+.call-button {
+  cursor: pointer;
+  background-color: #19c083;
+}
+
+.waiting-button {
+  cursor: not-allowed;
+  background-color: rgb(255, 0, 0);
+}
+
+.arrived-button {
+  cursor: auto;
+  background-color: none;
+  color: #19c083;
+  border: 1px solid #19c083;
+}
