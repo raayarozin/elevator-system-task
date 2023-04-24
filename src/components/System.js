@@ -1,5 +1,5 @@
 import './System.css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Button from './Button';
 import Elevator from './Elevator';
 import movingEImage from '../assets/elevator-moving.png';
@@ -98,9 +98,9 @@ const System = () => {
       elevatorGrid[elevator.id].currentFloor = destination;
       elevatorGrid[elevator.id].targetFloor = null;
       elevatorGrid[elevator.id].isMoving = false;
-      elevatorGrid[elevator.id].calculatedTime = `${
-        time - elevatorGrid[elevator.id].start
-      } seconds`;
+      elevatorGrid[elevator.id].calculatedTime = `${Math.round(
+        (time - elevatorGrid[elevator.id].start) / 1000
+      )} seconds`;
     }
     setElevatorGrid([...elevatorGrid]);
   };
@@ -117,20 +117,27 @@ const System = () => {
     }
   };
 
-  const callElevator = (targetFloor) => {
+  const getClosestElevator = (targetFloor) => {
     const availableElevators = elevatorGrid.filter(
       (elevator) => !elevator.isMoving
     );
     const distances = availableElevators.map((el) =>
       Math.abs(el.currentFloor - targetFloor)
     );
-    const closest =
-      availableElevators[distances.indexOf(Math.min(...distances))];
+    return availableElevators[distances.indexOf(Math.min(...distances))];
+  };
 
-    moveElevator(closest, targetFloor);
+  const callElevator = (targetFloor, time) => {
+    const closest = getClosestElevator(targetFloor);
+    handleElevatorMovement('moving', closest, targetFloor, time);
 
     setTimeout(() => {
-      stopElevator(closest, targetFloor);
+      handleElevatorMovement(
+        'arrived',
+        closest,
+        targetFloor,
+        new Date(Date.now()).getTime()
+      );
     }, 2000);
 
     setTimeout(() => {
@@ -139,30 +146,28 @@ const System = () => {
     }, 3000);
   };
 
-  const moveElevator = (closestElevator, targetFloor) => {
-    buttonsSetStates[targetFloor]('waiting');
-    updateElevatorGrid(
-      closestElevator,
-      targetFloor,
-      'moving',
-      new Date(Date.now()).getMilliseconds()
-    );
-    updateElevatorDisplay(closestElevator.id, targetFloor, 'moving');
-  };
+  const handleElevatorMovement = (
+    movement,
+    closestElevator,
+    targetFloor,
+    time
+  ) => {
+    if (movement === 'moving') {
+      updateElevatorGrid(closestElevator, targetFloor, movement, time);
+      updateElevatorDisplay(closestElevator.id, targetFloor, movement);
+    } else if (movement === 'arrived') {
+      updateElevatorGrid(closestElevator, targetFloor, 'arrived', time);
+      updateElevatorDisplay(closestElevator.id, targetFloor, 'arrived');
 
-  const stopElevator = (closestElevator, targetFloor) => {
-    updateElevatorGrid(
-      closestElevator,
-      targetFloor,
-      'arrived',
-      new Date(Date.now()).getMilliseconds()
-    );
-    updateElevatorDisplay(closestElevator.id, targetFloor, 'arrived');
-    buttonsSetStates[targetFloor]('arrived');
-    new Audio(ding).play();
+      buttonsSetStates[targetFloor]('arrived');
+      new Audio(ding).play();
+    }
   };
 
   const addToQueue = (targetFloor) => {
+    buttonsSetStates[targetFloor]('waiting');
+
+    const start = new Date(Date.now()).getTime();
     calls.push(targetFloor);
 
     const interval = setInterval(() => {
@@ -171,18 +176,18 @@ const System = () => {
       } else {
         if (calls.length > 1) {
           const targetFloor = calls.shift();
-          callElevator(targetFloor);
+          callElevator(targetFloor, start);
         } else if (calls.length === 1) {
           const targetFloor = calls.shift();
-          waitToNextAvailableElevator(targetFloor);
+          waitToNextAvailableElevator(targetFloor, start);
         }
       }
     }, 2000);
   };
 
-  const waitToNextAvailableElevator = (targetFloor) => {
+  const waitToNextAvailableElevator = (targetFloor, start) => {
     setTimeout(() => {
-      callElevator(targetFloor);
+      callElevator(targetFloor, start);
     }, 2000);
   };
 
